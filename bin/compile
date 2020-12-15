@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 indent() {
     sed -u 's/^/      /'
 }
@@ -12,18 +13,25 @@ if [ ! -f "${ENV_DIR}/APP_BASE" ]; then
     echo "APP_BASE was not set. Aborting" | indent
     exit 1
 fi
+if [ ! -f "${ENV_DIR}/SUPPORT_DIR" ]; then
+    echo "SUPPORT_DIR was not set. Aborting" | indent
+    exit 1
+fi
 APP_BASE="$(cat "${ENV_DIR}/APP_BASE")"
+SUPPORT_DIR="$(cat "${ENV_DIR}/SUPPORT_DIR")"
 
 (
     mv "${BUILD_DIR}/${APP_BASE}" "${STAGE}" &&
+    mv "${BUILD_DIR}/${SUPPORT_DIR}" "${STAGE}" &&
+    sed -i "s/file:\.\.\/${SUPPORT_DIR}/file:\.\/${SUPPORT_DIR}/" "${STAGE}/package.json"
     rm -rf "${BUILD_DIR}" &&
     mv "${STAGE}/$(basename "$APP_BASE")" "${BUILD_DIR}"
 )
 
 if [ $? -ne 0 ]; then
-    echo "FAILED to copy directory into place" | indent
+    echo "FAILED to copy directory into place or substitute support dir" | indent
     exit 1
 fi
 
 echo "Copied ${APP_BASE} to root of app successfully" | indent
-
+echo "Copied ${SUPPORT_DIR} to root of ${APP_BASE} successfully" | indent
